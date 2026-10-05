@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin Gudang Pabrik Beras</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f5f1;--card:#fff;--ink:#1d2a21;--mute:#667366;--line:#dde3da;--in:#2f6b3f;--in-bg:#e4f1e6;--out:#b4561b;--out-bg:#f8e9dc;--warn:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a16;--card:#1d2620;--ink:#e8efe9;--mute:#9aa89c;--line:#2e3b31;--in:#6fc283;--in-bg:#203a27;--out:#f0a066;--out-bg:#41301f;--warn:#ff8a80}}
+:root[data-theme="dark"]{--bg:#141a16;--card:#1d2620;--ink:#e8efe9;--mute:#9aa89c;--line:#2e3b31;--in:#6fc283;--in-bg:#203a27;--out:#f0a066;--out-bg:#41301f;--warn:#ff8a80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Plus Jakarta Sans",system-ui,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap}
+h1{font-size:19px;margin:0;font-weight:800;letter-spacing:-.01em}
+h2{font-size:16px;margin:0 0 12px;font-weight:700}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{border:0;background:none;color:var(--mute);font:inherit;font-weight:500;padding:8px 14px;border-radius:8px;cursor:pointer}
+nav button[aria-selected=true]{background:var(--ink);color:var(--bg);font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--in);outline-offset:2px}
+main{max-width:1060px;margin:0 auto;padding:20px}
+.grid{display:grid;gap:14px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.stat b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em}
+.stat span{color:var(--mute);font-size:13px}
+.two{grid-template-columns:minmax(260px,340px) 1fr;align-items:start}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+label{display:block;font-size:13px;font-weight:500;color:var(--mute);margin-bottom:10px}
+input,select{display:block;width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.btn{width:100%;padding:11px;border:0;border-radius:8px;font:inherit;font-weight:700;color:#fff;cursor:pointer;margin-top:4px}
+.btn.in{background:var(--in)}.btn.out{background:var(--out)}
+:root[data-theme="dark"] .btn,@media (prefers-color-scheme:dark){}
+.msg{font-size:13px;margin-top:8px;min-height:18px;color:var(--warn)}
+.msg.ok{color:var(--in)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+th{text-align:left;font-weight:700;color:var(--mute);font-size:13px;padding:8px;border-bottom:1px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700}
+.tag.in{background:var(--in-bg);color:var(--in)}.tag.out{background:var(--out-bg);color:var(--out)}
+.del{border:0;background:none;color:var(--warn);cursor:pointer;font:inherit;font-size:13px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;min-width:80px}
+.bar i{display:block;height:100%;background:var(--in)}
+.empty{color:var(--mute);padding:18px 8px;text-align:center}
+.hidden{display:none}
+#mgrid table{min-width:0}
+.theme{border:1px solid var(--line);background:none;color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;font:inherit;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Gudang Pabrik Beras</h1>
+  <nav role="tablist" id="tabs">
+    <button role="tab" data-t="dash" aria-selected="true">Ringkasan</button>
+    <button role="tab" data-t="masuk" aria-selected="false">Barang masuk</button>
+    <button role="tab" data-t="keluar" aria-selected="false">Barang keluar</button>
+    <button role="tab" data-t="stok" aria-selected="false">Stok</button>
+    <button role="tab" data-t="laporan" aria-selected="false">Laporan</button>
+    <button role="tab" data-t="master" aria-selected="false">Master data</button>
+  </nav>
+  <button class="theme" id="theme" type="button">Mode gelap</button>
+</header>
+<main>
+  <section id="dash">
+    <div class="grid stats" id="stats"></div>
+    <div class="card"><h2>Transaksi terbaru</h2><div class="scroll"><table id="recent"></table></div></div>
+  </section>
+
+  <section id="masuk" class="hidden">
+    <div class="grid two">
+      <div class="card"><h2>Catat barang masuk</h2>
+        <div id="f-in"></div>
+      </div>
+      <div class="card"><h2>Riwayat barang masuk</h2><div class="scroll"><table id="t-in"></table></div></div>
+    </div>
+  </section>
+
+  <section id="keluar" class="hidden">
+    <div class="grid two">
+      <div class="card"><h2>Catat barang keluar</h2>
+        <div id="f-out"></div>
+      </div>
+      <div class="card"><h2>Riwayat barang keluar</h2><div class="scroll"><table id="t-out"></table></div></div>
+    </div>
+  </section>
+
+  <section id="stok" class="hidden">
+    <div class="card"><h2>Stok saat ini</h2><div class="scroll"><table id="t-stok"></table></div></div>
+  </section>
+  <section id="laporan" class="hidden"><div class="card">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-bottom:14px">
+      <label style="margin:0">Jenis laporan<select id="r-mode"><option value="d">Harian</option><option value="m">Bulanan</option></select></label>
+      <label style="margin:0">Periode<input id="r-per" type="date"></label>
+      <button class="btn in" type="button" id="r-exp" style="width:auto;padding:10px 18px;margin:0">Unduh CSV</button>
+    </div>
+    <div class="grid stats" id="r-stats"></div>
+    <h2>Ringkasan per barang</h2><div class="scroll"><table id="r-sum"></table></div>
+    <h2 style="margin-top:20px">Rincian transaksi</h2><div class="scroll"><table id="r-det"></table></div>
+  </div></section>
+
+  <section id="master" class="hidden"><div class="grid" id="mgrid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start"></div></section>
+</main>
+
+<script>
+let mid=1;
+const mk=a=>a.map(n=>Array.isArray(n)?{id:mid++,nama:n[0],x:n[1]}:{id:mid++,nama:n,x:""});
+const master={
+ barang:mk(["Gabah kering giling","Beras premium","Beras medium","Menir","Dedak","Sekam"]),
+ pemasok:mk([["Tani Makmur","0812-0000-0001"],["Pak Slamet","0812-0000-0002"],["Hasil giling",""]]),
+ pelanggan:mk([["Toko Sumber Rejeki","0812-0000-0003"]])
+};
+const KIND={barang:["Barang",""],pemasok:["Pemasok","Telepon"],pelanggan:["Pelanggan","Telepon"]};
+const ITEMS=[];
+const today=new Date().toISOString().slice(0,10);
+let nid=1;
+const tx=[
+ {id:nid++,type:"in",date:today,item:"Gabah kering giling",party:"Tani Makmur",kg:5000,price:6500,note:"Truk 1"},
+ {id:nid++,type:"in",date:today,item:"Gabah kering giling",party:"Pak Slamet",kg:2500,price:6400,note:""},
+ {id:nid++,type:"in",date:today,item:"Beras premium",party:"Hasil giling",kg:3200,price:12800,note:"Batch A"},
+ {id:nid++,type:"out",date:today,item:"Beras premium",party:"Toko Sumber Rejeki",kg:1000,price:14000,note:"Kirim pagi"},
+ {id:nid++,type:"in",date:today,item:"Dedak",party:"Hasil giling",kg:600,price:3000,note:""},
+];
+const $=s=>document.querySelector(s);
+const kg=n=>n.toLocaleString("id-ID")+" kg";
+const rp=n=>"Rp "+n.toLocaleString("id-ID");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function stock(){const s={};ITEMS.forEach(i=>s[i]=0);tx.forEach(t=>s[t.item]+=t.type==="in"?t.kg:-t.kg);return s}
+
+function formHtml(type){
+  const lbl=type==="in"?"Pemasok / sumber":"Pembeli / tujuan";
+  return `<label>Tanggal<input type="date" id="${type}-date" value="${today}"></label>
+  <label>Jenis barang<select id="${type}-item">${ITEMS.map(i=>`<option>${i}</option>`).join("")}</select></label>
+  <label>${lbl}<select id="${type}-party">${(type==="in"?master.pemasok:master.pelanggan).map(r=>`<option>${esc(r.nama)}</option>`).join("")}</select></label>
+  <label>Jumlah (kg)<input type="number" min="1" id="${type}-kg" inputmode="numeric"></label>
+  <label>Harga per kg (Rp)<input type="number" min="0" id="${type}-price" inputmode="numeric"></label>
+  <label>Catatan<input id="${type}-note" placeholder="Opsional"></label>
+  <button class="btn ${type}" type="button" data-save="${type}">${type==="in"?"Simpan barang masuk":"Simpan barang keluar"}</button>
+  <div class="msg" id="${type}-msg" role="status"></div>`;
+}
+function buildForms(){$("#f-in").innerHTML=formHtml("in");$("#f-out").innerHTML=formHtml("out")}
+
+function save(type){
+  const g=id=>$("#"+type+"-"+id).value.trim();
+  const msg=$("#"+type+"-msg");
+  const qty=+g("kg"),price=+g("price"),item=g("item"),party=g("party");
+  msg.className="msg";
+  if(!g("date")||!party||!(qty>0)){msg.textContent="Isi tanggal, pilih pihak (tambah di Master data), dan jumlah kg lebih dari 0.";return}
+  if(type==="out"&&qty>stock()[item]){msg.textContent="Stok "+item+" hanya "+kg(stock()[item])+".";return}
+  tx.push({id:nid++,type,date:g("date"),item,party,kg:qty,price:price||0,note:g("note")});
+  ["kg","price","note"].forEach(f=>$("#"+type+"-"+f).value="");
+  render();
+  msg.className="msg ok";msg.textContent="Tersimpan.";
+}
+document.addEventListener("click",e=>{
+  const s=e.target.dataset.save;if(s)save(s);
+  const d=e.target.dataset.del;
+  if(d){const i=tx.findIndex(t=>t.id==d);const t=tx[i];
+    if(t.type==="in"&&stock()[t.item]-t.kg<0){alert("Tidak bisa dihapus: stok akan jadi minus karena barang sudah keluar.");return}
+    tx.splice(i,1);render()}
+});
+
+function rows(list,withType){
+  if(!list.length)return `<tr><td class="empty" colspan="7">Belum ada data. Isi form untuk mulai mencatat.</td></tr>`;
+  return `<thead><tr><th>Tanggal</th>${withType?"<th>Tipe</th>":""}<th>Barang</th><th>Pihak</th><th class="n">Jumlah</th><th class="n">Total</th><th></th></tr></thead><tbody>`+
+  list.map(t=>`<tr><td>${t.date}</td>${withType?`<td><span class="tag ${t.type}">${t.type==="in"?"Masuk":"Keluar"}</span></td>`:""}<td>${esc(t.item)}${t.note?`<br><small style="color:var(--mute)">${esc(t.note)}</small>`:""}</td><td>${esc(t.party)}</td><td class="n">${kg(t.kg)}</td><td class="n">${rp(t.kg*t.price)}</td><td><button class="del" data-del="${t.id}" type="button">Hapus</button></td></tr>`).join("")+"</tbody>";
+}
+
+function render(){
+  const s=stock(),sorted=[...tx].reverse();
+  const tin=tx.filter(t=>t.type==="in").reduce((a,t)=>a+t.kg,0);
+  const tout=tx.filter(t=>t.type==="out").reduce((a,t)=>a+t.kg,0);
+  const beras=s["Beras premium"]+s["Beras medium"];
+  $("#stats").innerHTML=[
+    ["Stok gabah",kg(s["Gabah kering giling"])],["Stok beras",kg(beras)],
+    ["Total masuk",kg(tin)],["Total keluar",kg(tout)],
+    ["Nilai penjualan",rp(tx.filter(t=>t.type==="out").reduce((a,t)=>a+t.kg*t.price,0))]
+  ].map(([l,v])=>`<div class="card stat"><b>${v}</b><span>${l}</span></div>`).join("");
+  $("#recent").innerHTML=rows(sorted.slice(0,8),true);
+  $("#t-in").innerHTML=rows(sorted.filter(t=>t.type==="in"),false);
+  $("#t-out").innerHTML=rows(sorted.filter(t=>t.type==="out"),false);
+  renderReport();
+  const max=Math.max(1,...Object.values(s));
+  $("#t-stok").innerHTML=`<thead><tr><th>Barang</th><th class="n">Masuk</th><th class="n">Keluar</th><th class="n">Stok</th><th></th></tr></thead><tbody>`+
+   ITEMS.map(i=>{const a=tx.filter(t=>t.item===i&&t.type==="in").reduce((x,t)=>x+t.kg,0);const b=tx.filter(t=>t.item===i&&t.type==="out").reduce((x,t)=>x+t.kg,0);
+   return `<tr><td>${i}</td><td class="n">${kg(a)}</td><td class="n">${kg(b)}</td><td class="n"><b>${kg(s[i])}</b></td><td><div class="bar"><i style="width:${Math.max(0,s[i])/max*100}%"></i></div></td></tr>`}).join("")+"</tbody>";
+}
+
+$("#tabs").addEventListener("click",e=>{
+  const t=e.target.dataset.t;if(!t)return;
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===t));
+  ["dash","masuk","keluar","stok","laporan","master"].forEach(id=>$("#"+id).classList.toggle("hidden",id!==t));
+});
+$("#theme").addEventListener("click",()=>{
+  const r=document.documentElement;
+  const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+  r.dataset.theme=dark?"light":"dark";
+  $("#theme").textContent=dark?"Mode gelap":"Mode terang";
+});
+
+$("#mgrid").innerHTML=Object.entries(KIND).map(([k,[l,x]])=>`<div class="card"><h2>${l}</h2><label>Nama ${l.toLowerCase()}<input id="m-${k}-nama"></label>${x?`<label>${x}<input id="m-${k}-x" inputmode="tel"></label>`:""}<button class="btn in" type="button" data-madd="${k}">Tambah ${l.toLowerCase()}</button><div class="msg" id="m-${k}-msg" role="status"></div><div class="scroll"><table id="m-${k}-t"></table></div></div>`).join("");
+
+function renderMaster(){
+  ITEMS.splice(0,ITEMS.length,...master.barang.map(b=>b.nama));
+  for(const k in KIND){const L=master[k];
+    $("#m-"+k+"-t").innerHTML=L.length?"<tbody>"+L.map(r=>`<tr><td>${esc(r.nama)}${r.x?`<br><small style="color:var(--mute)">${esc(r.x)}</small>`:""}</td><td class="n"><button class="del" data-mdel="${k}:${r.id}" type="button">Hapus</button></td></tr>`).join("")+"</tbody>":`<tr><td class="empty">Belum ada data.</td></tr>`}
+  buildForms();
+}
+function madd(k){
+  const n=$("#m-"+k+"-nama").value.trim(),xe=$("#m-"+k+"-x"),x=xe?xe.value.trim():"",m=$("#m-"+k+"-msg");
+  m.className="msg";
+  if(!n){m.textContent="Isi nama dulu.";return}
+  if(master[k].some(r=>r.nama.toLowerCase()===n.toLowerCase())){m.textContent="Nama sudah ada.";return}
+  master[k].push({id:mid++,nama:n,x});
+  $("#m-"+k+"-nama").value="";if(xe)xe.value="";
+  renderMaster();render();
+  m.className="msg ok";m.textContent="Tersimpan.";
+}
+function mdel(k,id){
+  const r=master[k].find(r=>r.id==id);
+  const used=k==="barang"?tx.some(t=>t.item===r.nama):tx.some(t=>t.party===r.nama&&t.type===(k==="pemasok"?"in":"out"));
+  if(used){alert(r.nama+" sudah dipakai di transaksi, jadi tidak bisa dihapus.");return}
+  master[k]=master[k].filter(x=>x.id!=id);renderMaster();render();
+}
+document.addEventListener("click",e=>{
+  const a=e.target.dataset.madd;if(a)madd(a);
+  const d=e.target.dataset.mdel;if(d){const [k,id]=d.split(":");mdel(k,id)}
+});
+
+function repList(){const p=$("#r-per").value;return tx.filter(t=>p&&t.date.startsWith(p)).sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id)}
+function renderReport(){
+  const L=repList(),S={};
+  ITEMS.forEach(i=>S[i]={a:0,b:0,c:0,d:0});
+  L.forEach(t=>{const s=S[t.item];if(t.type==="in"){s.a+=t.kg;s.c+=t.kg*t.price}else{s.b+=t.kg;s.d+=t.kg*t.price}});
+  const T=Object.values(S).reduce((x,s)=>({a:x.a+s.a,b:x.b+s.b,c:x.c+s.c,d:x.d+s.d}),{a:0,b:0,c:0,d:0});
+  $("#r-stats").innerHTML=[["Barang masuk",kg(T.a)],["Barang keluar",kg(T.b)],["Nilai pembelian",rp(T.c)],["Nilai penjualan",rp(T.d)]].map(([l,v])=>`<div class="card stat"><b>${v}</b><span>${l}</span></div>`).join("");
+  const act=ITEMS.filter(i=>S[i].a||S[i].b),none=`<tr><td class="empty">Tidak ada transaksi pada periode ini.</td></tr>`;
+  $("#r-sum").innerHTML=act.length?`<thead><tr><th>Barang</th><th class="n">Masuk</th><th class="n">Keluar</th><th class="n">Pembelian</th><th class="n">Penjualan</th></tr></thead><tbody>`+act.map(i=>`<tr><td>${esc(i)}</td><td class="n">${kg(S[i].a)}</td><td class="n">${kg(S[i].b)}</td><td class="n">${rp(S[i].c)}</td><td class="n">${rp(S[i].d)}</td></tr>`).join("")+"</tbody>":none;
+  $("#r-det").innerHTML=L.length?`<thead><tr><th>Tanggal</th><th>Tipe</th><th>Barang</th><th>Pihak</th><th class="n">Jumlah</th><th class="n">Total</th></tr></thead><tbody>`+L.map(t=>`<tr><td>${t.date}</td><td><span class="tag ${t.type}">${t.type==="in"?"Masuk":"Keluar"}</span></td><td>${esc(t.item)}</td><td>${esc(t.party)}</td><td class="n">${kg(t.kg)}</td><td class="n">${rp(t.kg*t.price)}</td></tr>`).join("")+"</tbody>":none;
+}
+function setMode(){const m=$("#r-mode").value;$("#r-per").type=m==="d"?"date":"month";$("#r-per").value=today.slice(0,m==="d"?10:7);renderReport()}
+$("#r-mode").addEventListener("change",setMode);
+$("#r-per").addEventListener("input",renderReport);
+$("#r-exp").addEventListener("click",async()=>{
+  const L=repList();
+  if(!L.length){alert("Tidak ada transaksi pada periode ini.");return}
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv="\ufeff"+[["Tanggal","Tipe","Barang","Pihak","Jumlah (kg)","Harga/kg","Total","Catatan"],...L.map(t=>[t.date,t.type==="in"?"Masuk":"Keluar",t.item,t.party,t.kg,t.price,t.kg*t.price,t.note])].map(r=>r.map(q).join(";")).join("\r\n");
+  let d=null;try{d=window.claude?await window.claude.use("downloads"):null}catch(e){}
+  if(!d){alert("Unduh file tidak tersedia di tampilan ini.");return}
+  try{await d.save({filename:"laporan-"+($("#r-mode").value==="d"?"harian":"bulanan")+"-"+$("#r-per").value+".csv",data:new Blob([csv],{type:"text/csv"})})}catch(e){if(!e||e.code!=="declined")alert("Gagal mengunduh file.")}
+});
+
+$("#r-per").value=today;
+renderMaster();
+render();
+</script>
+</body>
+</html>
